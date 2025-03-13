@@ -2,9 +2,10 @@
 
 class AuthService {
     constructor() {
-        this.dbName = 'webxrAppDB';
-        this.dbVersion = 1;
+        this.dbName = 'webxrAppDB_v';
+        this.dbVersion = 1; // Incremented to trigger onupgradeneeded
         this.usersStore = 'users';
+        this.scoresStore = 'scores';
         this.db = null;
         this.initDB();
     }
@@ -19,8 +20,14 @@ class AuthService {
 
                 // Create users object store if it doesn't exist
                 if (!db.objectStoreNames.contains(this.usersStore)) {
-                    const store = db.createObjectStore(this.usersStore, { keyPath: 'email' });
-                    store.createIndex('email', 'email', { unique: true });
+                    db.createObjectStore(this.usersStore, { keyPath: 'email' });
+                }
+
+                // Create scores object store if it doesn't exist
+                if (!db.objectStoreNames.contains(this.scoresStore)) {
+                    const store = db.createObjectStore(this.scoresStore, { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('email', 'email', { unique: false });
+                    store.createIndex('score', 'score', { unique: false });
                 }
             };
 

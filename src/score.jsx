@@ -1,13 +1,22 @@
 
+
 import { PositionalAudio, Text } from "@react-three/drei";
 import { useEffect, useRef } from "react";
-
 import { PositionalAudio as PAudio } from "three";
 import { create } from "zustand";
+import ScoreService from "./services/ScoreService";
+import AuthService from "./services/AuthService";
 
 export const useScoreStore = create((set) => ({
   score: 0,
-  addScore: () => set((state) => ({ score: state.score + 10 })),
+  addScore: () => set((state) => {
+    const newScore = state.score + 10;
+    const user = AuthService.getCurrentUser();
+    if (user) {
+      ScoreService.saveScore(user.email, newScore); // Save or update the score
+    }
+    return { score: newScore };
+  }),
 }));
 
 export const Score = () => {

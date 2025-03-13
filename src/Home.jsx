@@ -1,7 +1,15 @@
-// src/Home.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import ScoreService from './services/ScoreService';
 
 export const Home = ({ onStartExperience, onLogout, username }) => {
+    const [scores, setScores] = useState([]);
+
+    useEffect(() => {
+        if (username) {
+            ScoreService.getScoresByEmail(username).then(setScores);
+        }
+    }, [username]);
+
     return (
         <div className="home-container">
             <div className="content">
@@ -12,7 +20,7 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
                     </button>
                 </div>
 
-                <h1>WebXR First Steps</h1>
+                <h1>Welcome to Meta Train 360!</h1>
                 <p className="tagline">An immersive WebXR shooting game experience.</p>
                 <p className="highlight">Optimized for <strong>Meta Quest</strong> and other VR headsets.</p>
 
@@ -44,6 +52,17 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
                         <li>Score high and challenge yourself!</li>
                     </ul>
                 </div>
+
+                {scores.length > 0 && (
+                    <div className="scores-section">
+                        <h3>Your Scores</h3>
+                        <ul>
+                            {scores.map((score, index) => (
+                                <li key={index}>{score.score} - {new Date(score.timestamp).toLocaleString()}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             <footer>
@@ -116,6 +135,22 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
         font-size: 1.2rem;
         margin-bottom: 15px;
         line-height: 1.6;
+    }
+
+    /* High Score styling */
+    .high-score {
+        background: rgba(76, 201, 240, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px auto;
+        font-size: 1.3rem;
+        max-width: 350px;
+    }
+    
+    .high-score span {
+        color: #4cc9f0;
+        font-weight: bold;
+        font-size: 1.5rem;
     }
 
     /* Features section */
@@ -202,6 +237,33 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
         border-top: 2px solid rgba(255, 255, 255, 0.2);
     }
 
+    .scores-section {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 30px auto;
+                    max-width: 600px;
+                    text-align: left;
+                }
+
+                .scores-section h3 {
+                    text-align: center;
+                    margin-bottom: 15px;
+                    color: #4cc9f0;
+                }
+
+                .scores-section ul {
+                    list-style-type: none;
+                    padding: 0;
+                }
+
+                .scores-section li {
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 10px;
+                    margin-bottom: 10px;
+                    border-radius: 5px;
+                }
+
     /* Footer Text */
     .footer-text {
         opacity: 0.8;
@@ -223,7 +285,6 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
         }
     }
 `}</style>
-
         </div>
     );
 };
