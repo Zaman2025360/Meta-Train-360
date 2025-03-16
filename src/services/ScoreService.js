@@ -1,5 +1,3 @@
-
-
 class ScoreService {
     constructor() {
         this.dbName = 'webxrAppDB_v'; // Use the new database name
@@ -41,19 +39,23 @@ class ScoreService {
                 const existingScore = event.target.result;
 
                 if (existingScore) {
-                    // Update the existing score
-                    existingScore.score = score;
-                    existingScore.timestamp = new Date().toISOString();
+                    // Update only if the new score is higher
+                    if (score > existingScore.score) {
+                        existingScore.score = score;
+                        existingScore.timestamp = new Date().toISOString();
 
-                    const updateRequest = store.put(existingScore);
+                        const updateRequest = store.put(existingScore);
 
-                    updateRequest.onsuccess = () => {
-                        resolve(existingScore);
-                    };
+                        updateRequest.onsuccess = () => {
+                            resolve(existingScore);
+                        };
 
-                    updateRequest.onerror = (event) => {
-                        reject('Error updating score: ' + event.target.error);
-                    };
+                        updateRequest.onerror = (event) => {
+                            reject('Error updating score: ' + event.target.error);
+                        };
+                    } else {
+                        resolve(existingScore); // Return existing score if it's higher
+                    }
                 } else {
                     // Create a new score entry
                     const newScore = {
@@ -96,6 +98,43 @@ class ScoreService {
 
             request.onerror = (event) => {
                 reject('Error retrieving scores: ' + event.target.error);
+            };
+        });
+    }
+
+    // Get all scores for the leaderboard
+    async getAllScores() {
+        if (!this.db) await this.initDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.scoresStore], 'readonly');
+            const store = transaction.objectStore(this.scoresStore);
+            const request = store.getAll();
+
+            request.onsuccess = (event) => {
+                // Get all scores
+                const allScores = event.target.result;
+
+                // Create a map to store highest score for each email
+                const highestScoreMap = new Map();
+
+                // Find highest score for each user
+                allScores.forEach(score => {
+                    if (!highestScoreMap.has(score.email) ||
+                        score.score > highestScoreMap.get(score.email).score) {
+                        highestScoreMap.set(score.email, score);
+                    }
+                });
+
+                // Convert map values to array and sort by score (highest first)
+                const leaderboardScores = Array.from(highestScoreMap.values())
+                    .sort((a, b) => b.score - a.score);
+
+                resolve(leaderboardScores);
+            };
+
+            request.onerror = (event) => {
+                reject('Error retrieving all scores: ' + event.target.error);
             };
         });
     }

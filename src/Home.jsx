@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import ScoreService from './services/ScoreService';
+import Leaderboard from './Leaderboard';
+import './styles/Home.css'; // Assuming you have this for your home styling
 
 export const Home = ({ onStartExperience, onLogout, username }) => {
-    const [scores, setScores] = useState([]);
+    const [userScores, setUserScores] = useState([]);
 
     useEffect(() => {
         if (username) {
-            ScoreService.getScoresByEmail(username).then(setScores);
+            // Get this user's personal scores
+            ScoreService.getScoresByEmail(username).then(scores => {
+                // Sort by score (highest first)
+                const sortedScores = scores.sort((a, b) => b.score - a.score);
+                setUserScores(sortedScores);
+            });
         }
     }, [username]);
 
@@ -24,6 +31,7 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
                 <p className="tagline">An immersive WebXR shooting game experience.</p>
                 <p className="highlight">Optimized for <strong>Meta Quest</strong> and other VR headsets.</p>
 
+
                 <div className="features">
                     <div className="feature">
                         <h3>🔹 Immersive VR</h3>
@@ -39,6 +47,28 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
                     </div>
                 </div>
 
+                <div className="game-stats-container">
+                    <div className="personal-stats">
+                        {userScores.length > 0 && (
+                            <div className="personal-scores-section">
+                                <h3>Your Top Scores</h3>
+                                <ul className="personal-scores-list">
+                                    {userScores.slice(0, 5).map((score, index) => (
+                                        <li key={index}>
+                                            <span className="score-value">{score.score}</span> -
+                                            <span className="score-date">{new Date(score.timestamp).toLocaleString()}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* The Leaderboard Component */}
+                    <Leaderboard />
+                </div>
+
+
                 <button className="start-button" onClick={onStartExperience}>
                     🚀 Start Experience
                 </button>
@@ -52,239 +82,11 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
                         <li>Score high and challenge yourself!</li>
                     </ul>
                 </div>
-
-                {scores.length > 0 && (
-                    <div className="scores-section">
-                        <h3>Your Scores</h3>
-                        <ul>
-                            {scores.map((score, index) => (
-                                <li key={index}>{score.score} - {new Date(score.timestamp).toLocaleString()}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
             </div>
 
             <footer>
                 <p className="footer-text">© 2025 VR Shooting Experience. All Rights Reserved.</p>
             </footer>
-
-
-            <style jsx>{`
-    /* Main container styling */
-    .home-container {
-        width: 100%;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background: linear-gradient(to bottom, #1a1a2e, #16213e);
-        color: white;
-        font-family: Arial, sans-serif;
-    }
-
-    /* Centered content */
-    .content {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 40px 20px;
-        text-align: center;
-    }
-
-    /* User welcome section */
-    .user-welcome {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 15px 20px;
-        border-radius: 10px;
-    }
-
-    .user-welcome h2 {
-        margin: 0;
-        color: #4cc9f0;
-        font-size: 1.5rem;
-    }
-
-    .logout-button {
-        background: #e63946;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    .logout-button:hover {
-        background: #c1121f;
-        transform: translateY(-2px);
-    }
-
-    /* Headings and text */
-    h1 {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        color: #4cc9f0;
-    }
-
-    p {
-        font-size: 1.2rem;
-        margin-bottom: 15px;
-        line-height: 1.6;
-    }
-
-    /* High Score styling */
-    .high-score {
-        background: rgba(76, 201, 240, 0.2);
-        border-radius: 10px;
-        padding: 15px;
-        margin: 20px auto;
-        font-size: 1.3rem;
-        max-width: 350px;
-    }
-    
-    .high-score span {
-        color: #4cc9f0;
-        font-weight: bold;
-        font-size: 1.5rem;
-    }
-
-    /* Features section */
-    .features {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap; /* Ensures responsiveness */
-        margin-top: 40px;
-    }
-
-    /* Feature cards */
-    .feature {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 20px;
-        width: 270px; /* Adjusted for consistency */
-        text-align: center;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .feature:hover {
-        transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .feature h3 {
-        color: #4cc9f0;
-        margin-bottom: 10px;
-        font-size: 1.5rem;
-    }
-
-    /* Start Experience button */
-    .start-button {
-        background: #4361ee;
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        font-size: 1.2rem;
-        border-radius: 30px;
-        cursor: pointer;
-        margin: 30px 0;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-    }
-
-    .start-button:hover {
-        background: #3a56d4;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
-    }
-
-    /* Instructions section */
-    .instructions {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 20px;
-        margin: 30px auto;
-        max-width: 600px;
-        text-align: left;
-    }
-
-    .instructions h3 {
-        text-align: center;
-        margin-bottom: 15px;
-        color: #4cc9f0;
-    }
-
-    .instructions ul {
-        margin-left: 20px;
-        line-height: 1.8;
-    }
-
-    footer {
-        background: rgba(0, 0, 0, 0.3);
-        padding: 20px;
-        text-align: center;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #ffffff;
-        letter-spacing: 1px;
-        border-top: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .scores-section {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    padding: 20px;
-                    margin: 30px auto;
-                    max-width: 600px;
-                    text-align: left;
-                }
-
-                .scores-section h3 {
-                    text-align: center;
-                    margin-bottom: 15px;
-                    color: #4cc9f0;
-                }
-
-                .scores-section ul {
-                    list-style-type: none;
-                    padding: 0;
-                }
-
-                .scores-section li {
-                    background: rgba(255, 255, 255, 0.05);
-                    padding: 10px;
-                    margin-bottom: 10px;
-                    border-radius: 5px;
-                }
-
-    /* Footer Text */
-    .footer-text {
-        opacity: 0.8;
-    }
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 2.2rem;
-        }
-
-        /* Stack feature cards vertically on small screens */
-        .features {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .feature {
-            width: 90%; /* Adjust width for small screens */
-        }
-    }
-`}</style>
         </div>
     );
 };

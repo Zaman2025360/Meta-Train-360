@@ -18,6 +18,10 @@ module.exports = {
         use: "babel-loader",
         exclude: /node_modules/,
       },
+      {
+        test: /\.css$/i, // Handles CSS files
+        use: ["style-loader", "css-loader"],
+      },
     ],
   },
   devServer: {
