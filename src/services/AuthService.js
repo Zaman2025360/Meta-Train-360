@@ -3,7 +3,7 @@
 class AuthService {
     constructor() {
         this.dbName = 'webxrAppDB_v';
-        this.dbVersion = 1; // Incremented to trigger onupgradeneeded
+        this.dbVersion = 3; // Incremented to trigger onupgradeneeded
         this.usersStore = 'users';
         this.scoresStore = 'scores';
         this.db = null;

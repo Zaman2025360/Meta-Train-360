@@ -1,7 +1,7 @@
 class ScoreService {
     constructor() {
         this.dbName = 'webxrAppDB_v'; // Use the new database name
-        this.dbVersion = 1; // Match the version in AuthService
+        this.dbVersion = 3; // Match the version in AuthService
         this.scoresStore = 'scores';
         this.db = null;
         this.initDB();

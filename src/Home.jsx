@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import ScoreService from './services/ScoreService';
 import Leaderboard from './Leaderboard';
-import './styles/Home.css'; // Assuming you have this for your home styling
+import StatsDashboard from './StatsDashboard';
+import './styles/Home.css';
 
 export const Home = ({ onStartExperience, onLogout, username }) => {
     const [userScores, setUserScores] = useState([]);
+    const [showStats, setShowStats] = useState(false);
 
     useEffect(() => {
         if (username) {
@@ -22,52 +24,66 @@ export const Home = ({ onStartExperience, onLogout, username }) => {
             <div className="content">
                 <div className="user-welcome">
                     {username && <h2>Welcome, {username}!</h2>}
-                    <button className="logout-button" onClick={onLogout}>
-                        Logout
-                    </button>
+                    <div className="user-actions">
+                        <button
+                            className="stats-toggle-button"
+                            onClick={() => setShowStats(!showStats)}
+                        >
+                            {showStats ? 'Hide Stats' : 'Show Stats'}
+                        </button>
+                        <button className="logout-button" onClick={onLogout}>
+                            Logout
+                        </button>
+                    </div>
                 </div>
 
                 <h1>Welcome to Meta Train 360!</h1>
                 <p className="tagline">An immersive WebXR shooting game experience.</p>
                 <p className="highlight">Optimized for <strong>Meta Quest</strong> and other VR headsets.</p>
 
+                {/* Stats Dashboard (toggleable) */}
+                {showStats && <StatsDashboard />}
 
-                <div className="features">
-                    <div className="feature">
-                        <h3>🔹 Immersive VR</h3>
-                        <p>Fully interactive 3D environment with smooth controls.</p>
-                    </div>
-                    <div className="feature">
-                        <h3>🎯 Shooting Mechanics</h3>
-                        <p>Engaging gameplay with real-time target tracking.</p>
-                    </div>
-                    <div className="feature">
-                        <h3>🏆 Score Tracking</h3>
-                        <p>Compete and track your best scores dynamically.</p>
-                    </div>
-                </div>
-
-                <div className="game-stats-container">
-                    <div className="personal-stats">
-                        {userScores.length > 0 && (
-                            <div className="personal-scores-section">
-                                <h3>Your Top Scores</h3>
-                                <ul className="personal-scores-list">
-                                    {userScores.slice(0, 5).map((score, index) => (
-                                        <li key={index}>
-                                            <span className="score-value">{score.score}</span> -
-                                            <span className="score-date">{new Date(score.timestamp).toLocaleString()}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                {/* Only show this section if stats dashboard is hidden */}
+                {!showStats && (
+                    <>
+                        <div className="features">
+                            <div className="feature">
+                                <h3>🔹 Immersive VR</h3>
+                                <p>Fully interactive 3D environment with smooth controls.</p>
                             </div>
-                        )}
-                    </div>
+                            <div className="feature">
+                                <h3>🎯 Shooting Mechanics</h3>
+                                <p>Engaging gameplay with real-time target tracking.</p>
+                            </div>
+                            <div className="feature">
+                                <h3>🏆 Score Tracking</h3>
+                                <p>Compete and track your best scores dynamically.</p>
+                            </div>
+                        </div>
 
-                    {/* The Leaderboard Component */}
-                    <Leaderboard />
-                </div>
+                        <div className="game-stats-container">
+                            <div className="personal-stats">
+                                {userScores.length > 0 && (
+                                    <div className="personal-scores-section">
+                                        <h3>Your Top Scores</h3>
+                                        <ul className="personal-scores-list">
+                                            {userScores.slice(0, 5).map((score, index) => (
+                                                <li key={index}>
+                                                    <span className="score-value">{score.score}</span> -
+                                                    <span className="score-date">{new Date(score.timestamp).toLocaleString()}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
 
+                            {/* The Leaderboard Component */}
+                            <Leaderboard />
+                        </div>
+                    </>
+                )}
 
                 <button className="start-button" onClick={onStartExperience}>
                     🚀 Start Experience
