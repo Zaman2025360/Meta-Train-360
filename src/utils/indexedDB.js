@@ -1,5 +1,5 @@
-const DB_NAME = 'WebXRGameDB_v5';
-const DB_VERSION = 5;
+const DB_NAME = 'WebXRGameDB_v6';
+const DB_VERSION = 6;
 const USER_STORE = 'users';
 
 // Initialize the database

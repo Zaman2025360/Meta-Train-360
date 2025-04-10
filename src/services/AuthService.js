@@ -1,136 +1,87 @@
-// src/services/AuthService.js
+import databaseService from './DatabaseService';
 
 class AuthService {
     constructor() {
-        this.dbName = 'webxrAppDB_v';
-        this.dbVersion = 1; // Incremented to trigger onupgradeneeded
-        this.usersStore = 'users';
-        this.scoresStore = 'scores';
-        this.db = null;
-        this.initDB();
+        this.usersStore = databaseService.usersStore;
     }
 
-    // Initialize the database
-    initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.dbVersion);
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-
-                // Create users object store if it doesn't exist
-                if (!db.objectStoreNames.contains(this.usersStore)) {
-                    db.createObjectStore(this.usersStore, { keyPath: 'email' });
-                }
-
-                // Create scores object store if it doesn't exist
-                if (!db.objectStoreNames.contains(this.scoresStore)) {
-                    const store = db.createObjectStore(this.scoresStore, { keyPath: 'id', autoIncrement: true });
-                    store.createIndex('email', 'email', { unique: false });
-                    store.createIndex('score', 'score', { unique: false });
-                }
-            };
-
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve(this.db);
-            };
-
-            request.onerror = (event) => {
-                reject('Error opening database: ' + event.target.error);
-            };
-        });
+    async withDB(callback) {
+        try {
+            const db = await databaseService.getDB();
+            return await callback(db);
+        } catch (error) {
+            console.error('Database operation failed:', error);
+            throw error;
+        }
     }
 
-    // Register a new user
     async registerUser(user) {
-        if (!this.db) await this.initDB();
+        return this.withDB(async (db) => {
+            // Check if user exists first
+            const existingUser = await this.getUserByEmail(user.email);
+            if (existingUser) {
+                throw new Error('User with this email already exists');
+            }
 
-        return new Promise((resolve, reject) => {
-            // Check if user already exists
-            this.getUserByEmail(user.email)
-                .then(existingUser => {
-                    if (existingUser) {
-                        reject('User with this email already exists');
-                        return;
-                    }
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.usersStore], 'readwrite');
+                const store = transaction.objectStore(this.usersStore);
 
-                    const transaction = this.db.transaction([this.usersStore], 'readwrite');
-                    const store = transaction.objectStore(this.usersStore);
+                const newUser = {
+                    email: user.email,
+                    password: user.password,
+                    username: user.username,
+                    createdAt: new Date().toISOString()
+                };
 
-                    // Add password hashing in a real application
-                    const newUser = {
-                        email: user.email,
-                        password: user.password, // In a real app, this should be hashed
-                        username: user.username,
-                        createdAt: new Date().toISOString()
-                    };
+                const request = store.add(newUser);
 
-                    const request = store.add(newUser);
+                request.onsuccess = () => {
+                    const { password, ...userWithoutPassword } = newUser;
+                    resolve(userWithoutPassword);
+                };
 
-                    request.onsuccess = () => {
-                        // Don't store password in session
-                        const { password, ...userWithoutPassword } = newUser;
-                        resolve(userWithoutPassword);
-                    };
-
-                    request.onerror = (event) => {
-                        reject('Error creating user: ' + event.target.error);
-                    };
-                })
-                .catch(error => {
-                    reject(error);
-                });
+                request.onerror = (event) => {
+                    reject(new Error(`Error creating user: ${event.target.error}`));
+                };
+            });
         });
     }
 
-    // Login a user
     async loginUser(email, password) {
-        if (!this.db) await this.initDB();
+        return this.withDB(async (db) => {
+            const user = await this.getUserByEmail(email);
+            if (!user) {
+                throw new Error('User not found');
+            }
 
-        return new Promise((resolve, reject) => {
-            this.getUserByEmail(email)
-                .then(user => {
-                    if (!user) {
-                        reject('User not found');
-                        return;
-                    }
+            if (user.password !== password) {
+                throw new Error('Invalid password');
+            }
 
-                    if (user.password === password) { // In a real app, compare hashed passwords
-                        const { password, ...userWithoutPassword } = user;
-
-                        // Set session
-                        localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-                        resolve(userWithoutPassword);
-                    } else {
-                        reject('Invalid password');
-                    }
-                })
-                .catch(error => {
-                    reject(error);
-                });
+            const { password: _, ...userWithoutPassword } = user;
+            localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+            return userWithoutPassword;
         });
     }
 
-    // Get user by email
     async getUserByEmail(email) {
-        if (!this.db) await this.initDB();
+        return this.withDB((db) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.usersStore], 'readonly');
+                const store = transaction.objectStore(this.usersStore);
+                const request = store.get(email);
 
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.usersStore], 'readonly');
-            const store = transaction.objectStore(this.usersStore);
-            const request = store.get(email);
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
 
-            request.onsuccess = (event) => {
-                resolve(event.target.result);
-            };
-
-            request.onerror = (event) => {
-                reject('Error retrieving user: ' + event.target.error);
-            };
+                request.onerror = (event) => {
+                    reject(new Error(`Error retrieving user: ${event.target.error}`));
+                };
+            });
         });
     }
-
     // Log out user
     logoutUser() {
         localStorage.removeItem('currentUser');

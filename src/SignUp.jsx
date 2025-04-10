@@ -31,6 +31,7 @@ export const SignUp = ({ onSignUp, onNavigateToSignIn }) => {
         setError('');
 
         try {
+
             // Register the user but don't automatically log them in
             await AuthService.registerUser({
                 username,
